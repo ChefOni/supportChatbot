@@ -116,3 +116,6 @@ Multi-tenant SaaS with shared Next.js app, isolated tenant data, Docker deployme
 ## 6. Next Steps
 
 Adjust stack (e.g., open-source embeddings, auth provider) or prioritize features?
+Learn from questions with no answers 
+Log every question 
+Allow support documents 
