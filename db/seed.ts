@@ -68,6 +68,8 @@ async function seed() {
         },
       ],
       status: "resolved",
+      rating: 5,
+      adminComment: "Handled all questions perfectly, great response.",
     },
     {
       customerId: "cust_002",
@@ -92,6 +94,8 @@ async function seed() {
         },
       ],
       status: "resolved",
+      rating: 4,
+      adminComment: "Good troubleshooting steps provided.",
     },
     {
       customerId: "cust_003",
@@ -158,36 +162,35 @@ async function seed() {
         },
       ],
       status: "resolved",
+      rating: 3,
     },
   ];
 
   for (const conv of sampleConversations) {
-    const [inserted] = await db
-      .insert(conversations)
-      .values({
-        customerId: conv.customerId,
-        messages: conv.messages,
-        status: conv.status,
-      })
-      .returning();
-
-    const rating =
-      conv.status === "resolved"
-        ? Math.floor(Math.random() * 2) + 4
-        : Math.floor(Math.random() * 3) + 1;
-
-    await db.insert(feedback).values({
-      conversationId: inserted.id,
-      rating,
-      comment:
-        rating >= 4
-          ? "Great support, got my issue resolved quickly!"
-          : "Still waiting for a resolution, hoping to hear back soon.",
+    await db.insert(conversations).values({
+      customerId: conv.customerId,
+      messages: conv.messages,
+      status: conv.status,
+      rating: conv.rating ?? null,
+      adminComment: conv.adminComment ?? null,
     });
+  }
+
+  const sampleFeedback = [
+    { category: "bug", message: "The dashboard charts don't load on mobile Safari.", comment: "iPhone 14" },
+    { category: "suggestion", message: "Would love a dark mode option for the dashboard.", comment: null },
+    { category: "other", message: "Great product overall! Keep up the good work.", comment: null },
+    { category: "bug", message: "Chat widget disappears after a few minutes on the demo page.", comment: null },
+    { category: "suggestion", message: "It would be helpful to have an export to CSV feature for conversations.", comment: "Nice to have" },
+  ];
+
+  for (const fb of sampleFeedback) {
+    await db.insert(feedback).values(fb);
   }
 
   console.log(`Seeded ${kbDocs.length} KB documents`);
   console.log(`Seeded ${sampleConversations.length} conversations`);
+  console.log(`Seeded ${sampleFeedback.length} feedback entries`);
   process.exit(0);
 }
 

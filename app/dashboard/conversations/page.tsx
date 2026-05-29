@@ -1,28 +1,19 @@
 import Link from "next/link";
 import { db } from "@/db";
-import { conversations, feedback } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { conversations } from "@/db/schema";
+import { sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConversationsPage() {
   let convs: typeof conversations.$inferSelect[] = [];
-  let feedbackMap = new Map<number, typeof feedback.$inferSelect>();
 
   try {
     convs = await db
       .select()
       .from(conversations)
       .orderBy(sql`created_at desc`);
-
-    feedbackMap = new Map(
-      await db
-        .select()
-        .from(feedback)
-        .then((rows) => rows.map((f) => [f.conversationId, f]))
-    );
   } catch {
-    // DB not available, show empty state
   }
 
   return (
@@ -32,8 +23,9 @@ export default async function ConversationsPage() {
       </h1>
 
       <div className="mt-6 flex flex-col">
-        <div className="grid grid-cols-[1fr_100px_100px_120px] gap-4 border-b border-foreground/10 px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted">
+        <div className="grid grid-cols-[1fr_80px_100px_100px_120px] gap-4 border-b border-foreground/10 px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted">
           <span>Customer</span>
+          <span>Rating</span>
           <span>Status</span>
           <span>Messages</span>
           <span>Date</span>
@@ -41,27 +33,22 @@ export default async function ConversationsPage() {
 
         {convs.map((conv) => {
           const msgCount = (conv.messages as unknown as Array<unknown>).length;
-          const fb = feedbackMap.get(conv.id);
 
           return (
             <Link
               key={conv.id}
               href={`/dashboard/conversations/${conv.id}`}
-              className="grid grid-cols-[1fr_100px_100px_120px] gap-4 border-b border-foreground/10 px-4 py-3 text-sm transition-colors hover:bg-surface-elevated"
+              className="grid grid-cols-[1fr_80px_100px_100px_120px] gap-4 border-b border-foreground/10 px-4 py-3 text-sm transition-colors hover:bg-surface-elevated"
             >
-              <div className="flex items-center gap-3">
-                <span className="font-medium">{conv.customerId}</span>
-                {fb && (
-                  <span className="text-xs text-accent">{fb.rating}★</span>
-                )}
-              </div>
+              <span className="font-medium">{conv.customerId}</span>
+              <span className={`text-xs font-medium ${conv.rating ? "text-accent" : "text-muted"}`}>
+                {conv.rating ? `${conv.rating}★` : "—"}
+              </span>
               <span
                 className={`text-xs font-medium ${
                   conv.status === "active"
                     ? "text-green-600"
-                    : conv.status === "escalated"
-                      ? "text-red-500"
-                      : "text-muted"
+                    : "text-muted"
                 }`}
               >
                 {conv.status}

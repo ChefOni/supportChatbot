@@ -33,8 +33,6 @@ export default async function DashboardPage() {
     statusCounts.find((s) => s.status === "active")?.count ?? 0;
   const resolvedCount =
     statusCounts.find((s) => s.status === "resolved")?.count ?? 0;
-  const escalatedCount =
-    statusCounts.find((s) => s.status === "escalated")?.count ?? 0;
 
   const avgRating =
     (await safeQuery(() =>
@@ -79,7 +77,6 @@ export default async function DashboardPage() {
         <StatCard label="Total Conversations" value={convCount} />
         <StatCard label="Active" value={activeCount} />
         <StatCard label="Resolved" value={resolvedCount} />
-        <StatCard label="Escalated" value={escalatedCount} />
         <StatCard label="Avg Rating" value={feedbackCount > 0 ? avgRating : "—"} />
         <StatCard label="Feedback Received" value={feedbackCount} />
         <StatCard label="KB Documents" value={kbCount} />
@@ -101,9 +98,7 @@ export default async function DashboardPage() {
                 className={`h-2 w-2 rounded-full ${
                   conv.status === "active"
                     ? "bg-green-500"
-                    : conv.status === "escalated"
-                      ? "bg-red-500"
-                      : "bg-muted"
+                    : "bg-muted"
                 }`}
               />
               <span className="font-medium">{conv.customerId}</span>

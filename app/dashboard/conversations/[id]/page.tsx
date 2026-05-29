@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/db";
-import { conversations, feedback } from "@/db/schema";
+import { conversations } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { StatusActions } from "./status-actions";
+import { AdminRating } from "./admin-rating";
 import type { Message } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,6 @@ export default async function ConversationDetailPage({
   const convId = Number(id);
 
   let conv: typeof conversations.$inferSelect | null = null;
-  let fb: typeof feedback.$inferSelect | null = null;
 
   try {
     conv = await db
@@ -25,16 +24,7 @@ export default async function ConversationDetailPage({
       .from(conversations)
       .where(eq(conversations.id, convId))
       .then((r) => r[0] ?? null);
-
-    if (conv) {
-      fb = await db
-        .select()
-        .from(feedback)
-        .where(eq(feedback.conversationId, convId))
-        .then((r) => r[0] ?? null);
-    }
   } catch {
-    // DB not available
   }
 
   if (!conv) notFound();
@@ -50,12 +40,12 @@ export default async function ConversationDetailPage({
         &larr; Back to conversations
       </Link>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-6 flex items-start justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">
             {conv.customerId}
           </h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted">
             Started {new Date(conv.createdAt).toLocaleString()}
             &nbsp;&middot;&nbsp;
             <span
@@ -72,25 +62,10 @@ export default async function ConversationDetailPage({
           </p>
         </div>
 
-        <StatusActions conversationId={conv.id} status={conv.status} />
+        <AdminRating conversationId={conv.id} currentRating={conv.rating} currentComment={conv.adminComment} />
       </div>
 
-      {fb && (
-        <div className="mt-6 rounded-xl border border-foreground/10 bg-surface-elevated px-5 py-4">
-          <p className="text-xs font-medium text-muted">Feedback</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-lg text-accent">{"★".repeat(fb.rating)}</span>
-            <span className="text-lg text-foreground/20">
-              {"★".repeat(5 - fb.rating)}
-            </span>
-          </div>
-          {fb.comment && (
-            <p className="mt-2 text-sm text-muted">&ldquo;{fb.comment}&rdquo;</p>
-          )}
-        </div>
-      )}
-
-      <div className="mt-8 flex flex-col gap-4">
+      <div className="mt-10 flex flex-col gap-6">
         {messages.map((msg, i) => (
           <div
             key={i}

@@ -1,26 +1,41 @@
 import Image from "next/image";
+import { ChatWidget } from "./components/ChatWidget";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="border-l border-foreground/10">
-      <nav className="fixed top-0 z-50 flex w-full items-center justify-between px-6 py-5 md:px-12">
-        <span className="font-display text-lg font-semibold tracking-tight">
+      <nav className="flex w-full items-center justify-between px-6 py-5 md:px-12">
+        <Link href="/" className="font-display text-lg font-semibold tracking-tight">
           baki
-        </span>
-        <a
-          href="#cta"
-          className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-        >
-          Get started
-        </a>
+        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/feedback"
+            className="text-sm text-muted transition-colors hover:text-foreground"
+          >
+            Feedback
+          </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          >
+            Dashboard
+          </Link>
+        </div>
       </nav>
 
-      <header className="flex min-h-dvh flex-col px-6 pt-24 pb-12 md:px-12">
+      <header className="flex min-h-dvh flex-col px-6 pb-12 md:px-12">
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center">
           <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between py-6">
             <div>
-              <span className="font-display text-7xl font-bold leading-[0.85] tracking-tight text-brand">
-                baki
+              <span className="flex flex-col gap-3">
+                <span className="max-w-fit rounded-full border border-brand/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand">
+                  Experimental
+                </span>
+                <span className="font-display text-7xl font-bold leading-[0.85] tracking-tight text-brand">
+                  baki
+                </span>
               </span>
               <p className="mt-4 max-w-lg font-display text-base leading-snug text-muted md:text-2xl">
                 AI-powered support that meets your customers where they are.
@@ -33,23 +48,23 @@ export default function Home() {
               >
                 Start free trial
               </a>
-              <a
-                href="#features"
+              <Link
+                href="/demo"
                 className="rounded-full border border-foreground/15 px-7 py-3 text-sm font-medium transition-all hover:border-foreground/30"
               >
                 See how it works
-              </a>
+              </Link>
             </div>
           </div>
 
           <div className="mt-16 md:mt-20">
-            <div className="relative w-full h-[500px] overflow-hidden rounded-2xl">
+            <div className="relative h-[500px] w-full overflow-hidden rounded-2xl">
               <Image
                 src="/hero2.png"
                 alt="baki AI support visualization"
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 80vw, 320px"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
               />
             </div>
           </div>
@@ -195,14 +210,23 @@ export default function Home() {
 
       <footer className="border-t border-foreground/10 px-6 py-8 md:px-12">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-          <span className="font-display text-sm font-semibold tracking-tight">
-            baki
-          </span>
+          <div className="flex items-center gap-6">
+            <span className="font-display text-sm font-semibold tracking-tight">
+              baki
+            </span>
+            <Link href="/demo" className="text-sm text-muted transition-colors hover:text-foreground">
+              Demo
+            </Link>
+            <Link href="/feedback" className="text-sm text-muted transition-colors hover:text-foreground">
+              Feedback
+            </Link>
+          </div>
           <span className="text-sm text-muted">
             &copy; {new Date().getFullYear()} baki. All rights reserved.
           </span>
         </div>
       </footer>
+      <ChatWidget />
     </div>
   );
 }

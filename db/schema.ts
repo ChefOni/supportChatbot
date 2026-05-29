@@ -12,16 +12,16 @@ export const conversations = pgTable("conversations", {
   customerId: varchar("customer_id", { length: 64 }).notNull(),
   messages: jsonb("messages").notNull().default([]),
   status: varchar({ length: 20 }).notNull().default("active"),
+  rating: integer("rating"),
+  adminComment: text("admin_comment"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const feedback = pgTable("feedback", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  conversationId: integer("conversation_id")
-    .notNull()
-    .references(() => conversations.id),
-  rating: integer().notNull(),
+  category: varchar({ length: 20 }).notNull(),
+  message: text().notNull(),
   comment: text(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

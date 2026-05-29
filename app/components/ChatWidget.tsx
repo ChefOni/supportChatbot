@@ -7,7 +7,36 @@ type Message = {
   content: string;
 };
 
+function useWidgetConfig() {
+  const [config, setConfig] = useState({
+    accentColor: "",
+    position: "",
+    bubbleText: "",
+  });
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("baki_chat_config") || localStorage.getItem("baki_widget_config");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setConfig({
+          accentColor: parsed.accentColor ?? "",
+          position: parsed.position ?? "",
+          bubbleText: parsed.bubbleText ?? "",
+        });
+      }
+    } catch {
+    }
+  }, []);
+
+  return config;
+}
+
 export function ChatWidget() {
+  const cfg = useWidgetConfig();
+  const accent = cfg.accentColor || undefined;
+  const rightPos = cfg.position !== "bottom-left";
+  const bubbleLabel = cfg.bubbleText || "Chat with us";
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -18,9 +47,6 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [feedbackSent, setFeedbackSent] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,7 +78,6 @@ export function ChatWidget() {
         ...prev,
         { role: "assistant", content: data.reply },
       ]);
-      setShowFeedback(true);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -66,29 +91,13 @@ export function ChatWidget() {
     }
   }
 
-  async function handleFeedback(value: number) {
-    setRating(value);
-    try {
-      await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationId,
-          rating: value,
-        }),
-      });
-      setFeedbackSent(true);
-    } catch {
-      // silently fail
-    }
-  }
-
   return (
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition-transform hover:scale-105"
-        aria-label="Toggle chat"
+        className={`fixed bottom-6 z-50 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 ${rightPos ? "right-6" : "left-6"}`}
+        style={accent ? { backgroundColor: accent } : undefined}
+        aria-label={bubbleLabel}
       >
         {open ? (
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -102,9 +111,12 @@ export function ChatWidget() {
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex w-[380px] max-w-[calc(100vw-48px)] flex-col rounded-2xl border border-foreground/10 bg-background shadow-2xl">
+        <div className={`fixed bottom-24 z-50 flex w-[380px] max-w-[calc(100vw-48px)] flex-col rounded-2xl border border-foreground/10 bg-background shadow-2xl ${rightPos ? "right-6" : "left-6"}`}>
           <div className="flex items-center gap-3 border-b border-foreground/10 px-5 py-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
+              style={accent ? { backgroundColor: accent } : undefined}
+            >
               B
             </div>
             <div>
@@ -122,9 +134,14 @@ export function ChatWidget() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-brand text-white"
+                      ? "text-white"
                       : "bg-surface-elevated text-foreground"
                   }`}
+                  style={
+                    msg.role === "user" && accent
+                      ? { backgroundColor: accent }
+                      : undefined
+                  }
                 >
                   {msg.content}
                 </div>
@@ -143,33 +160,6 @@ export function ChatWidget() {
               </div>
             )}
 
-            {showFeedback && !feedbackSent && !loading && (
-              <div className="flex flex-col items-center gap-2 rounded-xl bg-surface-elevated px-4 py-3">
-                <p className="text-xs text-muted">How was this response?</p>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => handleFeedback(star)}
-                      className={`text-lg transition-colors ${
-                        star <= rating
-                          ? "text-accent"
-                          : "text-foreground/20 hover:text-accent/50"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {feedbackSent && (
-              <div className="rounded-xl bg-surface-elevated px-4 py-2 text-center text-xs text-muted">
-                Thanks for your feedback!
-              </div>
-            )}
-
             <div ref={bottomRef} />
           </div>
 
@@ -184,14 +174,22 @@ export function ChatWidget() {
               disabled={loading}
               className="flex-1 rounded-full bg-surface-elevated px-4 py-2 text-sm outline-none placeholder:text-muted disabled:opacity-50"
             />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white disabled:opacity-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-white disabled:opacity-50"
+                style={accent ? { backgroundColor: accent } : undefined}
+              >
+              {loading ? (
+                <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              )}
             </button>
           </form>
         </div>
